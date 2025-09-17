@@ -1,0 +1,320 @@
+#include <iostream>
+#include <string>
+#include<fstream>
+using namespace std;
+
+struct Room {
+	int roomNo;
+	string actype;
+	string bedtype;
+	bool isAvailable;
+};
+
+struct Customer {
+	string name;
+	string phone;
+	int people;
+	int days;
+	int bookedRoom;
+	string checkinDate;
+	string checkoutDate;
+	int totalBill;
+};
+
+const int MAX = 100;
+Room arr[MAX];
+const int AC_Charge = 1500;
+const int Non_AC_Charge = 1200;
+const int SingleBed_Charge = 700;
+const int DoubleBed_Charge = 950;
+void generateReceipt(const Customer&,const Room&);
+
+void initialRoom() {
+	for(int i = 0; i < MAX; i++) {
+		arr[i].roomNo = 101 + i;
+		arr[i].actype = (arr[i].roomNo % 2 == 0) ? "AC" : "Non AC";
+		arr[i].bedtype = (arr[i].roomNo % 3 == 0) ? "Single" : "Double";
+		arr[i].isAvailable = true;
+	}
+}
+
+int askForRoom(string acWanted, string bedWanted) {
+	for(int i = 0; i < MAX; i++) {
+		if(acWanted == arr[i].actype && bedWanted == arr[i].bedtype && arr[i].isAvailable)
+			return i;
+	}
+	return -1;
+}
+
+int calculateBill(string actype, string bedtype, int days) {
+    Customer c;
+    
+	int acCost = (actype == "AC") ? AC_Charge : Non_AC_Charge;
+	int bedCost = (bedtype == "Single") ? SingleBed_Charge : DoubleBed_Charge;
+	return (acCost + bedCost) * days;
+}
+
+Customer bookRoom() {
+	string acWanted, bedWanted;
+	cout << "\nEnter Room type (AC/Non AC): ";
+	cin.ignore();
+	getline(cin, acWanted);
+	cout << "Enter Bed type (Single/Double): ";
+	cin >> bedWanted;
+
+	int choosen = askForRoom(acWanted, bedWanted);
+	if(choosen == -1) {
+		cout << "Sorry! No " << acWanted << " " << bedWanted << " rooms available.\n";
+		return Customer{};
+	}
+
+	Customer c;
+	Room r;
+	cout << "Enter customer name: ";
+	cin.ignore();
+	getline(cin, c.name);
+	cout << "Enter phone number: ";
+	cin >> c.phone;
+	cout << "Enter number of people: ";
+	cin >> c.people;
+	cout<<"Enter CheckIN date : ";
+	cin>>c.checkinDate;
+	cout<<"Enter CheckOUT date : ";
+	cin>>c.checkoutDate;
+	cout<<"Enter no. of days to stay : ";
+    cin>>c.days;
+    c.totalBill = calculateBill(arr[choosen].actype, arr[choosen].bedtype, c.days);
+
+	c.bookedRoom = arr[choosen].roomNo;
+	arr[choosen].isAvailable = false;
+	
+	ofstream out("hotel.txt",ios::app);
+	
+	//checks if the file is empty
+	ifstream check("hotel.txt");
+	check.seekg(0,ios::end);
+	if(check.tellg() == 0){
+	    out<< " Room No.  Name           Phone no.        CheckIN     CheckOUT    Bill"<<endl;
+        out<<"--------  -------------  ---------------  ----------  ----------  --------"<<endl; 
+	}
+	
+	check.close();
+	
+	out.setf(ios::left);
+	out.width(10); out << c.bookedRoom;
+    out.width(15); out << c.name;
+    out.width(18); out << c.phone;
+    out.width(12); out << c.checkinDate;
+    out.width(12); out << c.checkoutDate;
+    out.width(10); out << c.totalBill<<endl;
+    
+    
+	cout << "Room " << c.bookedRoom << " booked successfully for " << c.name << endl;
+	
+   	
+	return c;
+}
+
+void checkBill(const Customer& c, const Room& r) {
+	int totalBill = calculateBill(r.actype, r.bedtype, c.days);
+	cout << "\n\n----------- Bill Details -----------\n";
+	cout << "Name                  : " << c.name << endl;
+	cout << "AC/Non AC             : " << r.actype << endl;
+	cout << "Single/Double bed     : " << r.bedtype << " Bed" << endl;
+	cout << "Days to stay          : " << c.days << " days" << endl;
+	cout << "Amount to pay         : Rs. " << c.totalBill << endl;
+}
+
+// Function to display all bookings
+void viewBookings() {
+	ifstream in("hotel.txt");
+	string line;
+	cout << "\n\n----------- All Bookings -----------\n";
+	while (getline(in, line)) {
+		cout << line << endl;
+	}
+	in.close();
+}
+
+void serachByRoom(){
+    int roomNo;
+    cout<<"Enter room no. to search : ";
+    cin>>roomNo;
+    
+    ifstream in("hotel.txt");
+    string line;
+    bool found = false;
+    while(getline(in,line)) {
+             //skips top line where name room no. are written
+             if(line[0] < '0' || line[0] > '9')
+             continue; 
+             //to_string converts roll no. to string
+             if(line.substr(0,3) == to_string(roomNo)){ 
+                cout<<"\n\nRecord found : "<<line<<endl;
+                found = true;
+                break;
+             }
+    }
+    in.close();
+    if(!found) cout<<"\n\nRecord not found!Please enter a valid room no.\n";
+    
+}
+
+void serachByName(){
+    string name;
+    cout<<"Enter name to search : ";
+    cin.ignore();
+    getline(cin,name);
+    
+    ifstream in("hotel.txt");
+    string line;
+    bool found = false;
+    while(getline(in,line)) {
+             //skips top line where name room no. are written
+             if(line[0] < '0' || line[0] > '9')
+             continue; 
+             //  it erases the extra spaces like "Garima     " == "Garima" is wrong
+            string nameFromLine = line.substr(10,15);
+              nameFromLine.erase(nameFromLine.find_last_not_of(" ")+1);
+              if(nameFromLine == name) {
+                cout<<"\n\nRecord found : "<<line<<endl;
+                found = true;
+                break;
+             }
+    }
+    in.close();
+    if(!found) cout<<"\n\nRecord not found!\n";
+    
+}
+void generateReceipt(const Customer& c,const Room& r) {
+    
+    string filename = "receipt_"+c.name; //make a receipt of persons name;
+    
+    for(int i = 0; i<filename.length();i++) {
+        if(filename[i] == ' ') {   
+            filename[i] = '_';   //it changes space into underscore like Garima Kamra to Garima_Kamra
+        }
+    }
+    
+    
+    filename += ".txt"; //add.txt to the filename
+    
+    ofstream rec(filename);
+    
+    rec<<"=================================================================\n";
+    rec<<"                    The LAVISH QUARTERS                          \n";
+    rec<<"=================================================================\n";
+    rec<<"Customer Name    : "<<c.name<<endl;
+    rec<<"Phone Number     : "<<c.phone<<endl;
+    rec<<"Room Number      : "<<c.bookedRoom<<endl;
+    rec<<"Room Type        : "<<r.actype<<endl;
+    rec<<"Bed Type         : "<<r.bedtype<<endl;
+    rec<<"People staying   : "<<c.people<<endl;
+    rec<<"CheckIN date     : "<<c.checkinDate<<endl;
+    rec<<"CheckOUT date    : "<<c.checkoutDate<<endl;
+    rec<<"Days of stay     : "<<c.days<<endl;
+    rec<<"-----------------------------------------------------------------\n";
+    rec<<"Total Payment    : "<<c.totalBill<<endl;
+    rec<<"-----------------------------------------------------------------\n";
+    rec<<"\n\n            Thanyou for visiting our Hotel             \n";
+    
+    rec.close();
+    
+    
+    
+}
+
+void printExtraCharges() {
+    cout<<"\n-----------Extra Charges-----------\n";
+    cout<<"Food(Per person/day)    : Rs.2000  "<<endl;
+    cout<<"Spa(Per person)         : Rs.1500  "<<endl;
+    cout<<"Room Service(Per Day)   : Rs.500  "<<endl;
+    cout<<"Extra Mattress(Per Day) : Rs.700  "<<endl;
+    cout<<"Parking(Entire Stay)    : Rs.150   "<<endl;
+    cout<<"Wifi(Entire Stay)       : Free of cost  "<<endl;
+    
+    cout<<"\n\n These services are absolutely Optional feel free to use\n"<<endl;
+    cout<<"These charges are not included in the bill and must be paid at the time of service.\n";
+}
+
+
+int main() {
+    cout<<"\n##=================Welcome to The LAVISH QUARTERS=================##\n";
+	initialRoom();
+	Customer allCustomers[MAX];
+	int customerCount = 0;
+
+	int choice;
+	do {
+		cout << "\n----------- HOTEL MANAGEMENT MENU -----------\n";
+		cout << "1. Book a Room\n";
+		cout << "2. Check Bill\n";
+		cout << "3. View All Bookings\n";
+		cout << "4. Search Customer \n";
+		cout << "5. Extra Charges\n";
+		cout << "6. Generate Receipt\n";
+		cout << "0. Exit\n";
+		cout << "Enter choice: ";
+		cin >> choice;
+
+		switch(choice) {
+		case 1:
+			allCustomers[customerCount] = bookRoom();
+			if (!allCustomers[customerCount].name.empty()) {
+			    customerCount++;
+			}
+			break;
+
+		case 2:
+			if (customerCount == 0) {
+				cout << "No booking found! Please book a room first.\n";
+			} else {
+			    for(int n = 0 ;n<customerCount ;n++)
+				checkBill(allCustomers[n], arr[allCustomers[n].bookedRoom - 101]);
+			}
+			break;
+			
+		case 3 :
+		viewBookings();
+		break;
+		
+		case 4 : 
+		char choice2;
+		cout << " a. By Room No.\n";
+		cout << " b. By Name\n";
+		cout << " Choose a or b : ";
+		cin>>choice2;
+		switch(choice2) {
+		    
+		    case 'a' : serachByRoom(); break;
+		    case 'b' : serachByName(); break;
+		    default : cout<<"Invalid choice!Choose between a or b\n"; break;
+		}
+		break;
+		
+		case 6 :
+		if (customerCount == 0) {
+				cout << "No booking found! Please book a room first.\n";
+			} else {
+			    for(int n = 0 ; n<customerCount ; n++)
+				generateReceipt(allCustomers[n], arr[allCustomers[n].bookedRoom - 101]);
+			}
+			
+			cout<<"\nReceipt generated! "<<endl;
+			break;
+			
+			case 5 :
+			printExtraCharges();
+			break;
+		
+		case 0:
+			cout << "Exiting...\n";
+			break;
+
+		default:
+			cout << "Invalid choice. Please try again.\n";
+		}
+	} while (choice != 0);
+
+	return 0;
+}
