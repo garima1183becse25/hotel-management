@@ -1,0 +1,91 @@
+// project name: Bank account creator
+#include <iostream>
+using namespace std;
+
+class BankAccount
+{
+private:
+    string name;
+    int accountNumber;
+    float balance;
+
+public:
+    // constructor to initialize data
+    BankAccount(string accHolder, int accNo, float bal)
+    {
+        name = accHolder;
+        accountNumber = accNo;
+        balance = bal;
+    }
+
+    // function to display account info
+    void displayAccount()
+    {
+        cout << "\n---Account Information ---\n" << endl;
+        cout << "Account Holder : " << name << endl;
+        cout << "Account Number : " << accountNumber << endl;
+        cout << "Balance        : ₹" << balance << endl;
+    }
+
+    void deposit(float amount)
+    {
+        if (amount > 0) {
+            balance += amount;
+            cout << "Deposited ₹" << amount << ".\nNew Balance: ₹" << balance << endl;
+        }
+        else if (amount == 0)
+        {
+            balance += amount;
+            cout << "Deposited ₹" << amount << ".\nNew Balance: ₹" << balance << endl;
+        }
+    }
+
+    void withdraw(float amount)
+    {
+        if (amount > 0 && amount <= balance)
+        {
+            balance -= amount;
+            cout << "Withdrawn ₹" << amount << ".\nRemaining Balance : ₹" << balance << endl;
+        }
+        else if (amount == 0)
+        {
+            balance -= amount;
+            cout << "Withdrawn ₹" << amount << ".\nRemaining Balance : ₹" << balance << endl;
+        }
+        else
+        {
+            cout << "Insufficient balance!\n";
+        }
+    }
+};
+
+int main()
+{
+    string name;
+    int accNo;
+    float balance;
+
+    cout << "Enter Account Holder Name : ";
+    getline(cin, name);
+
+    cout << "Enter Account Number : ";
+    cin >> accNo;
+
+    cout << "Enter initial Balance : ";
+    cin >> balance;
+
+    // creating object using constructor
+    BankAccount account(name, accNo, balance);
+
+    float depAmount;
+    cout << "\nEnter amount to deposit : ";
+    cin >> depAmount;
+    account.deposit(depAmount);
+
+    float withAmount;
+    cout << "\nEnter amount to withdraw : ";
+    cin >> withAmount;
+    account.withdraw(withAmount);
+
+    return 0;
+}
