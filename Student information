@@ -1,0 +1,349 @@
+//Project Name: Student Record Management System
+// Backend: File System (text file students.txt as database)
+//Features (CRUD):
+//Add Student
+
+
+//View All Students
+
+
+//Search by Roll No
+
+
+//Update Student
+
+
+//Delete Student
+
+
+
+
+
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+struct Student {
+	int rollNo;
+	string name;
+	float marks;
+};
+
+// Function to add student
+void addStudent() {
+	Student s;
+	cout << "Enter Roll No: ";
+	cin >> s.rollNo;
+	cout << "Enter Name: ";
+	cin.ignore();
+	getline(cin, s.name);
+	cout << "Enter Marks: ";
+	cin >> s.marks;
+
+	ofstream out("students.txt", ios::app);
+	out << s.rollNo << "," << s.name << "," << s.marks << endl;
+	out.close();
+	cout << "Student record added!\n";
+}
+
+
+
+
+
+void viewStudents() {
+    ifstream in("students.txt");
+    string line;
+    cout << "\n--- Student Records ---\n";
+    while (getline(in, line)) {
+        cout << line << endl;
+    }
+    in.close();
+}
+
+// Function to search student by roll no
+void searchStudent() {
+	int roll;
+	cout << "Enter Roll No to search: ";
+	cin >> roll;
+
+	ifstream in("students.txt");
+	string line;
+	bool found = false;
+	while (getline(in, line)) {
+		size_t pos = line.find(",");
+		int r = stoi(line.substr(0, pos));
+		if (r == roll) {
+			cout << "Record Found: " << line << endl;
+			found = true;
+			break;
+		}
+	}
+	in.close();
+	if (!found) cout << "Student not found.\n";
+}
+
+//to search through name 
+// while (getline(in, line)) {
+//         size_t firstComma = line.find(",");
+//         size_t secondComma = line.find(",", firstComma + 1);
+
+//         // Extract name from between the commas and quotes
+//         string name = line.substr(firstComma + 2, secondComma - firstComma - 3);    //if name is in double quotes
+
+
+
+
+// // Directly extract the name between the two commas
+// string name = line.substr(firstComma + 1, secondComma - firstComma - 1);      //if name is not in double quotes
+
+
+
+// Function to update a student record
+void updateStudent() {
+	int roll;
+	cout << "Enter Roll No to update: ";
+	cin >> roll;
+
+	ifstream in("students.txt");
+	ofstream temp("temp.txt",ios::app);
+	string line;
+	bool found = false;
+
+	while (getline(in, line)) {
+		size_t pos1 = line.find(",");
+		int r = stoi(line.substr(0, pos1));
+
+		if (r == roll) {
+			Student s;
+			s.rollNo = roll;
+			cout << "Enter New Name: ";
+			cin.ignore();
+			getline(cin, s.name);
+			cout << "Enter New Marks: ";
+			cin >> s.marks;
+			temp << s.rollNo << "," << s.name << "," << s.marks << endl;
+			found = true;
+		} else {
+			temp << line << endl;
+		}
+	}
+
+	in.close();
+	temp.close();
+
+	remove("students.txt");
+	rename("temp.txt", "students.txt");
+
+	if (found)
+		cout << "Record updated.\n";
+	else
+		cout << "Record not found.\n";
+}
+
+// Function to delete a student
+void deleteStudent() {
+	int roll;
+	cout << "Enter Roll No to delete: ";
+	cin >> roll;
+
+	ifstream in("students.txt");
+	ofstream temp("temp.txt");
+	string line;
+	bool found = false;
+
+	while (getline(in, line)) {
+		size_t pos = line.find(",");
+		int r = stoi(line.substr(0, pos));
+
+		if (r != roll) {
+			temp << line << endl;
+		} else {
+			found = true;
+		}
+	}
+
+	in.close();
+	temp.close();
+
+	remove("students.txt");
+	rename("temp.txt", "students.txt");
+
+	if (found)
+		cout << "Record deleted.\n";
+	else
+		cout << "Record not found.\n";
+}
+//function to sort in ascending order
+void sortAndSaveStudentsByMarksAsc() {
+    const int MAX = 100;
+    Student arr[MAX];
+    int count = 0;
+
+    ifstream in("students.txt");
+    string line;
+
+    // Step 1: Read all students into array
+    while (getline(in, line) && count < MAX) {
+        size_t first = line.find(",");
+        size_t second = line.find(",", first + 1);
+
+        arr[count].rollNo = stoi(line.substr(0, first));
+        arr[count].name = line.substr(first + 1, second - first - 1);
+        arr[count].marks = stof(line.substr(second + 1));
+
+        count++;
+    }
+    in.close();
+
+    // Step 2: Sort by marks (ascending)
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (arr[i].marks > arr[j].marks) {
+                swap(arr[i], arr[j]);
+            }
+        }
+    }
+
+    // Step 3: Overwrite file with sorted data
+    ofstream out("students.txt", ios::trunc); // ios::trunc clears the file
+    for (int i = 0; i < count; i++) {
+        out << arr[i].rollNo << "," << arr[i].name << "," << arr[i].marks << endl;
+    }
+    out.close();
+
+    cout << "Students sorted by marks in ascending order and saved to file.\n";
+}
+
+
+void sortAndSaveByName() {
+    const int MAX = 100;
+    Student arr[MAX];
+    int count = 0;
+
+    ifstream in("students.txt");
+    string line;
+
+    while (getline(in, line) && count < MAX) {
+        size_t first = line.find(",");
+        size_t second = line.find(",", first + 1);
+
+        arr[count].rollNo = stoi(line.substr(0, first));
+        arr[count].name = line.substr(first + 1, second - first - 1);
+        arr[count].marks = stof(line.substr(second + 1));
+        count++;
+    }
+    in.close();
+
+    // Sort by name (alphabetical order)
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (arr[i].name > arr[j].name) {
+                swap(arr[i], arr[j]);
+            }
+        }
+    }
+
+    ofstream out("students.txt", ios::trunc); // Overwrite file
+    for (int i = 0; i < count; i++) {
+        out << arr[i].rollNo << "," << arr[i].name << "," << arr[i].marks << endl;
+    }
+    out.close();
+
+    cout << "Students sorted by name (A-Z) and saved.\n";
+}
+
+
+void sortAndSaveByMarksDesc() {
+    const int MAX = 100;
+    Student arr[MAX];
+    int count = 0;
+
+    ifstream in("students.txt");
+    string line;
+
+    while (getline(in, line) && count < MAX) {
+        size_t first = line.find(",");
+        size_t second = line.find(",", first + 1);
+
+        arr[count].rollNo = stoi(line.substr(0, first));
+        arr[count].name = line.substr(first + 1, second - first - 1);
+        arr[count].marks = stof(line.substr(second + 1));
+        count++;
+    }
+    in.close();
+
+    // Sort by marks (descending)
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (arr[i].marks < arr[j].marks) {
+                swap(arr[i], arr[j]);
+            }
+        }
+    }
+
+    ofstream out("students.txt", ios::trunc); // Overwrite file
+    for (int i = 0; i < count; i++) {
+        out << arr[i].rollNo << "," << arr[i].name << "," << arr[i].marks << endl;
+    }
+    out.close();
+
+    cout << "Students sorted by marks (descending) and saved.\n";
+}
+
+
+
+// Menu
+int main() {
+	int choice;
+	do {
+		cout << "\n--- Student Record System ---\n";
+		cout << "1. Add Student\n";
+		cout << "2. View All Students\n";
+		cout << "3. Search Student\n";
+		cout << "4. Update Student\n";
+		cout << "5. Delete Student\n";
+		cout << "6. Sort by Marks (Ascending) and Save\n";
+		cout << "7. Sort by Marks (Descending)\n";
+        cout << "8. Sort by Name (A-Z)\n";
+		cout << "0. Exit\n";
+		cout << "Enter choice: ";
+		cin >> choice;
+
+		switch (choice) {
+		case 1:
+			addStudent();
+			break;
+		case 2:
+			viewStudents();
+			break;
+		case 3:
+			searchStudent();
+			break;
+		case 4:
+			updateStudent();
+			break;
+		case 5:
+			deleteStudent();
+			break;
+		case 6:
+            sortAndSaveStudentsByMarksAsc();
+            break;
+        case 7:
+            sortAndSaveByMarksDesc();
+            break;
+        case 8:
+            sortAndSaveByName();
+            break;
+    
+		case 0:
+			cout << "Exiting...\n";
+			break;
+		default:
+			cout << "Invalid choice.\n";
+		}
+
+	} while (choice != 0);
+
+	return 0;
+}
